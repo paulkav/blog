@@ -1,38 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const ARTICLES_FILE = path.join(process.cwd(), 'data', 'articles.json');
-
-interface Article {
-  id: string;
-  title: string;
-  content: string;
-  author: string;
-  category: string | null;
-  tags: string[];
-  created_at: string;
-  slug: string;
-}
-
-function readArticles(): Article[] {
-  try {
-    if (!fs.existsSync(ARTICLES_FILE)) {
-      return [];
-    }
-    const data = fs.readFileSync(ARTICLES_FILE, 'utf8');
-    const articles = JSON.parse(data);
-    
-    // Ensure created_at field exists (convert createdAt if needed)
-    return articles.map((article: any) => ({
-      ...article,
-      created_at: article.created_at || article.createdAt || new Date().toISOString()
-    }));
-  } catch (error) {
-    console.error('Error reading articles:', error);
-    return [];
-  }
-}
+import { supabase } from '../../../../../lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
@@ -43,22 +10,45 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Search query is required' }, { status: 400 });
     }
 
-    const articles = readArticles();
-    const queryLower = query.toLowerCase();
+    // Search in multiple fields using Supabase's full-text search and ILIKE for partial matches
+    const { data: articles, error } = await supabase
+      .from('articles')
+      .select('*')
+      .or(`title.ilike.%${query}%,content.ilike.%${query}%,author.ilike.%${query}%,category.ilike.%${query}%`)
+      .order('created_at', { ascending: false });
 
-    // Search in multiple fields
-    const matchingArticles = articles.filter(article => {
-      const titleMatch = article.title.toLowerCase().includes(queryLower);
-      const contentMatch = article.content.toLowerCase().includes(queryLower);
-      const authorMatch = article.author.toLowerCase().includes(queryLower);
-      const categoryMatch = article.category && article.category.toLowerCase().includes(queryLower);
-      const tagMatch = article.tags.some(tag => tag.toLowerCase().includes(queryLower));
+    if (error) {
+      console.error('Supabase search error:', error);
+      return NextResponse.json(
+        { error: 'Failed to search articles' },
+        { status: 500 }
+      );
+    }
 
-      return titleMatch || contentMatch || authorMatch || categoryMatch || tagMatch;
-    });
+    // Also search in tags (array field requires different approach)
+    const { data: tagArticles, error: tagError } = await supabase
+      .from('articles')
+      .select('*')
+      .contains('tags', [query])
+      .order('created_at', { ascending: false });
+
+    if (tagError) {
+      console.error('Supabase tag search error:', tagError);
+    }
+
+    // Combine results and remove duplicates
+    const allResults = [...(articles || [])];
+    if (tagArticles) {
+      tagArticles.forEach(tagArticle => {
+        if (!allResults.some(article => article.id === tagArticle.id)) {
+          allResults.push(tagArticle);
+        }
+      });
+    }
 
     // Sort by relevance (title matches first, then content, then others)
-    const sortedResults = matchingArticles.sort((a, b) => {
+    const sortedResults = allResults.sort((a, b) => {
+      const queryLower = query.toLowerCase();
       const aTitle = a.title.toLowerCase();
       const bTitle = b.title.toLowerCase();
       
