@@ -40,7 +40,7 @@ export default function ArticlePage() {
       } else {
         setError('Failed to load article');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load article');
     } finally {
       setLoading(false);
