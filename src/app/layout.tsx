@@ -44,8 +44,8 @@ export default function RootLayout({
               <div className="footer-section">
                 <h4>Quick Links</h4>
                 <ul>
-                  <li><a href="/">Home</a></li>
-                  <li><a href="/create">Create Article</a></li>
+                  <li><Link href="/">Home</Link></li>
+                  <li><Link href="/create">Create Article</Link></li>
                 </ul>
               </div>
               <div className="footer-section">
