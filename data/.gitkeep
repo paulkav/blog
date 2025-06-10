@@ -1,0 +1,2 @@
+# This file ensures the data directory is tracked by git
+# Articles will be stored in articles.json in this directory 

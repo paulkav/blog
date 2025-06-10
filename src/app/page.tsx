@@ -1,103 +1,182 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+
+interface Article {
+  id: string;
+  title: string;
+  content: string;
+  author: string;
+  category: string;
+  tags: string[];
+  created_at: string;
+  slug: string;
+}
+
+type SortOption = 'date-newest' | 'date-oldest' | 'title-asc' | 'title-desc' | 'author-asc' | 'tags-asc';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('date-newest');
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  useEffect(() => {
+    fetchArticles();
+  }, []);
+
+  const fetchArticles = async () => {
+    try {
+      const response = await fetch('/api/articles');
+      if (response.ok) {
+        const data = await response.json();
+        setArticles(data);
+      } else {
+        setError('Failed to load articles');
+      }
+    } catch (err) {
+      setError('Failed to load articles');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sortArticles = (articles: Article[], sortOption: SortOption): Article[] => {
+    const sorted = [...articles].sort((a, b) => {
+      switch (sortOption) {
+        case 'date-newest':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'date-oldest':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'title-asc':
+          return a.title.localeCompare(b.title);
+        case 'title-desc':
+          return b.title.localeCompare(a.title);
+        case 'author-asc':
+          return a.author.localeCompare(b.author);
+        case 'tags-asc':
+          const aFirstTag = a.tags.length > 0 ? a.tags[0].toLowerCase() : '';
+          const bFirstTag = b.tags.length > 0 ? b.tags[0].toLowerCase() : '';
+          return aFirstTag.localeCompare(bFirstTag);
+        default:
+          return 0;
+      }
+    });
+    return sorted;
+  };
+
+  const sortedArticles = sortArticles(articles, sortBy);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const truncateContent = (content: string, maxLength: number = 120) => {
+    if (content.length <= maxLength) return content;
+    return content.substr(0, maxLength) + '...';
+  };
+
+  if (loading) {
+    return (
+      <div className="home-container">
+        <div className="loading">Loading articles...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="home-container">
+      <div className="home-header">
+        <h1>Welcome to BlogNetwork</h1>
+        <p>Discover amazing articles from our community of writers</p>
+      </div>
+
+      {articles.length > 0 && (
+        <div className="sort-controls">
+          <label htmlFor="sort-select" className="sort-label">
+            Sort by:
+          </label>
+          <select
+            id="sort-select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            className="sort-select"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
+            <option value="date-newest">Date (Newest First)</option>
+            <option value="date-oldest">Date (Oldest First)</option>
+            <option value="title-asc">Title (A-Z)</option>
+            <option value="title-desc">Title (Z-A)</option>
+            <option value="author-asc">Author (A-Z)</option>
+            <option value="tags-asc">Tags (A-Z)</option>
+          </select>
+        </div>
+      )}
+
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
+
+      {articles.length === 0 && !error ? (
+        <div className="no-articles">
+          <h2>No articles yet</h2>
+          <p>Be the first to create an article!</p>
+          <a href="/create" className="create-first-article">
+            Create Your First Article
           </a>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      ) : (
+        <div className="articles-grid">
+          {sortedArticles.map((article) => (
+            <article key={article.id} className="article-card">
+              <div className="article-header">
+                <h2 className="article-title">
+                  <a href={`/article/${article.id}`} className="article-title-link">
+                    {article.title}
+                  </a>
+                </h2>
+                <div className="article-meta">
+                  <span className="article-author">By {article.author}</span>
+                  <span className="article-date">{formatDate(article.created_at)}</span>
+                </div>
+              </div>
+              
+              <div className="article-content">
+                <p>{truncateContent(article.content)}</p>
+              </div>
+              
+              <div className="article-footer">
+                <div className="article-info">
+                  {article.category && (
+                    <span className="article-category">{article.category}</span>
+                  )}
+                  {article.tags.length > 0 && (
+                    <div className="article-tags">
+                      {article.tags.slice(0, 2).map((tag, index) => (
+                        <span key={index} className="tag">
+                          {tag}
+                        </span>
+                      ))}
+                      {article.tags.length > 2 && (
+                        <span className="tag-more">+{article.tags.length - 2}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <a href={`/article/${article.id}`} className="read-more">
+                  Read More →
+                </a>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
