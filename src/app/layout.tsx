@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import SearchBar from "../components/SearchBar";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "BlogNetwork",
@@ -18,13 +19,13 @@ export default function RootLayout({
         <nav className="navbar">
           <div className="nav-container">
             <div className="nav-brand">
-              <a href="/" className="brand-link">
+              <Link href="/" className="brand-link">
                 <h1>BlogNetwork</h1>
-              </a>
+              </Link>
             </div>
             <SearchBar />
             <div className="nav-menu">
-              <a href="/create" className="nav-link">Create An Article</a>
+              <Link href="/create" className="nav-link">Create An Article</Link>
             </div>
           </div>
         </nav>

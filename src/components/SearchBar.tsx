@@ -168,7 +168,7 @@ export default function SearchBar() {
             <>
               <div className="search-results-header">
                 <span className="search-results-count">
-                  {searchResults.total} result{searchResults.total !== 1 ? 's' : ''} for "{searchResults.query}"
+                  {searchResults.total} result{searchResults.total !== 1 ? 's' : ''} for &quot;{searchResults.query}&quot;
                 </span>
               </div>
               
@@ -207,7 +207,7 @@ export default function SearchBar() {
                 </div>
               ) : (
                 <div className="search-no-results">
-                  <p>No articles found for "{searchResults.query}"</p>
+                  <p>No articles found for &quot;{searchResults.query}&quot;</p>
                   <p>Try searching with different keywords.</p>
                 </div>
               )}

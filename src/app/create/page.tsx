@@ -47,7 +47,7 @@ export default function CreateArticle() {
       } else {
         setMessage('Error creating article. Please try again.');
       }
-    } catch (error) {
+    } catch {
       setMessage('Error creating article. Please try again.');
     } finally {
       setIsSubmitting(false);

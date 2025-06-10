@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 
 interface Article {
   id: string;
@@ -72,9 +73,9 @@ export default function ArticlePage() {
         <div className="error-message">
           {error || 'Article not found'}
         </div>
-        <a href="/" className="back-button">
+        <Link href="/" className="back-button">
           ← Back to Home
-        </a>
+        </Link>
       </div>
     );
   }
@@ -82,9 +83,9 @@ export default function ArticlePage() {
   return (
     <div className="article-page-container">
       <nav className="article-nav">
-        <a href="/" className="back-button">
+        <Link href="/" className="back-button">
           ← Back to Home
-        </a>
+        </Link>
       </nav>
 
       <article className="full-article">

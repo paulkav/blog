@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 interface Article {
   id: string;
@@ -34,7 +35,7 @@ export default function Home() {
       } else {
         setError('Failed to load articles');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load articles');
     } finally {
       setLoading(false);
@@ -127,9 +128,9 @@ export default function Home() {
         <div className="no-articles">
           <h2>No articles yet</h2>
           <p>Be the first to create an article!</p>
-          <a href="/create" className="create-first-article">
+          <Link href="/create" className="create-first-article">
             Create Your First Article
-          </a>
+          </Link>
         </div>
       ) : (
         <div className="articles-grid">
@@ -137,9 +138,9 @@ export default function Home() {
             <article key={article.id} className="article-card">
               <div className="article-header">
                 <h2 className="article-title">
-                  <a href={`/article/${article.id}`} className="article-title-link">
+                  <Link href={`/article/${article.id}`} className="article-title-link">
                     {article.title}
-                  </a>
+                  </Link>
                 </h2>
                 <div className="article-meta">
                   <span className="article-author">By {article.author}</span>
@@ -169,9 +170,9 @@ export default function Home() {
                     </div>
                   )}
                 </div>
-                <a href={`/article/${article.id}`} className="read-more">
+                <Link href={`/article/${article.id}`} className="read-more">
                   Read More →
-                </a>
+                </Link>
               </div>
             </article>
           ))}
